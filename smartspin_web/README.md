@@ -54,3 +54,24 @@ SMARTSPIN_ADMIN_EMAIL=your-admin-email@gmail.com
 ```
 
 For Gmail, use an App Password instead of your normal password.
+
+
+## Create Orders
+
+Log in as admin, open Transactions, enter the customer name, service, and weight, then click Create Order. The app saves the order and sends/saves a customer notification.
+
+
+## GCash Payment QR
+
+The GCash QR image is included at:
+
+```text
+static/images/gcash.jpg
+```
+
+It appears on the Transactions screen for admin and on the customer dashboard for customer payment instructions.
+
+
+## Customer Records
+
+Admin can add customers from the Customers screen. New registered customers and admin-added customers appear in the admin customer table. Admin-added customer accounts use the default password `customer`.

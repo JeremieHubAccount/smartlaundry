@@ -359,3 +359,18 @@
 .empty-state { color: var(--gray-400); font-size: 13px; padding: 12px 0; }
 .role-customer .admin-only { display: none !important; }
 .role-admin .customer-only { display: none !important; }
+
+
+.payment-gcash-card { display: grid; grid-template-columns: 1fr 180px; gap: 20px; align-items: center; background: #fff; border: 1px solid var(--gray-200); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; margin-bottom: 20px; }
+.payment-copy p, .customer-payment-grid p { color: var(--gray-600); font-size: 13px; line-height: 1.5; margin-top: 6px; }
+.payment-note { color: var(--gray-400); font-size: 12px; margin-top: 10px; }
+.payment-qr-link { display: block; justify-self: end; }
+.payment-qr { width: 180px; aspect-ratio: 1; object-fit: cover; object-position: center; border-radius: var(--radius-sm); border: 1px solid var(--gray-200); }
+.customer-payment-grid { display: grid; grid-template-columns: 110px 1fr; gap: 16px; align-items: center; }
+.customer-payment-qr { width: 110px; aspect-ratio: 1; object-fit: cover; object-position: center; border-radius: var(--radius-sm); border: 1px solid var(--gray-200); }
+@media (max-width: 760px) {
+  .payment-gcash-card { grid-template-columns: 1fr; }
+  .payment-qr-link { justify-self: start; }
+  .payment-qr { width: min(220px, 100%); }
+  .customer-payment-grid { grid-template-columns: 1fr; }
+}

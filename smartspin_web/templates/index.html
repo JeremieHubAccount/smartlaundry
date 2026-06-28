@@ -112,6 +112,18 @@
           </div>
         </div>
 
+        
+        <div class="customer-only dash-card customer-payment-card" style="margin-bottom:20px;display:none">
+          <div class="card-title">Pay With GCash</div>
+          <div class="customer-payment-grid">
+            <img src="/static/images/gcash.jpg" alt="GCash payment QR code" class="customer-payment-qr">
+            <div>
+              <p>Scan this QR to pay your laundry order.</p>
+              <div class="payment-note">After paying, send your receipt/reference number to the shop.</div>
+            </div>
+          </div>
+        </div>
+
         <div class="customer-only dash-card" style="margin-bottom:20px;display:none">
           <div class="card-title">My Orders</div>
           <div id="customer-orders-list" class="customer-orders"></div>
@@ -178,30 +190,20 @@
         </div>
         <div class="tbl-card">
           <div class="tbl-toolbar">
-            <input class="tbl-input" type="text" placeholder="Customer Name" style="width:160px">
-            <input class="tbl-input" type="text" placeholder="Phone Number" style="width:140px">
-            <input class="tbl-input" type="text" placeholder="Address" style="width:180px">
-            <button class="btn-add">＋ Add Customer</button>
+            <input class="tbl-input" id="customer-name" type="text" placeholder="Customer Name" style="width:160px">
+            <input class="tbl-input" id="customer-email" type="email" placeholder="Email" style="width:180px">
+            <input class="tbl-input" id="customer-phone" type="text" placeholder="Phone Number" style="width:140px">
+            <input class="tbl-input" id="customer-address" type="text" placeholder="Address" style="width:180px">
+            <button class="btn-add" onclick="addCustomer()">＋ Add Customer</button>
           </div>
           <table>
             <thead>
               <tr>
-                <th>ID</th><th>Name</th><th>Phone</th><th>Address</th><th>Actions</th>
+                <th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Address</th><th>Login</th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td style="color:var(--gray-400);font-weight:600">#001</td>
-                <td><strong>Juan Dela Cruz</strong></td>
-                <td>09123456789</td>
-                <td>San Fernando, La Union</td>
-                <td>
-                  <div class="tbl-actions">
-                    <button class="btn-tbl btn-edit">Edit</button>
-                    <button class="btn-tbl btn-delete">Delete</button>
-                  </div>
-                </td>
-              </tr>
+            <tbody id="customers-table-body">
+              <tr><td colspan="6" class="empty-state">Loading customers...</td></tr>
             </tbody>
           </table>
         </div>
@@ -214,15 +216,15 @@
         </div>
         <div class="tbl-card">
           <div class="tbl-toolbar">
-            <input class="tbl-input" type="text" placeholder="Customer Name" style="width:160px">
-            <select class="tbl-select">
+            <input class="tbl-input" id="order-customer" type="text" placeholder="Customer Name" style="width:160px">
+            <select class="tbl-select" id="order-service">
               <option>Wash &amp; Fold</option>
               <option>Wash &amp; Dry</option>
               <option>Dry Clean</option>
               <option>Iron Only</option>
             </select>
-            <input class="tbl-input" type="number" placeholder="Weight (kg)" style="width:120px">
-            <button class="btn-add">＋ Create Order</button>
+            <input class="tbl-input" id="order-weight" type="number" min="0.1" step="0.1" placeholder="Weight (kg)" style="width:120px">
+            <button class="btn-add" onclick="createOrder()">＋ Create Order</button>
           </div>
           <table>
             <thead>
@@ -230,7 +232,7 @@
                 <th>ID</th><th>Customer</th><th>Service</th><th>Weight</th><th>Amount</th><th>Status</th><th>Order Status</th><th>Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="orders-table-body">
               <tr>
                 <td style="color:var(--gray-400);font-weight:600">#001</td>
                 <td><strong>Juan Dela Cruz</strong></td>

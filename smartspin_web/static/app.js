@@ -35,7 +35,7 @@ async function doLogin() {
     document.querySelector('.avatar').textContent = u[0].toUpperCase();
     applyRoleView();
     await refreshDashboard();
-    if (currentUser.role === 'admin') loadNotifications();
+    if (currentUser.role === 'admin') { loadNotifications(); loadCustomers(); }
   } catch (error) {
     showToast(error.message);
   }
@@ -64,6 +64,67 @@ async function registerAccount() {
     showToast(error.message);
   }
 }
+
+async function addCustomer() {
+  if (currentUser?.role !== 'admin') {
+    showToast('Only admin can add customers.');
+    return;
+  }
+  const name = document.getElementById('customer-name')?.value.trim();
+  const email = document.getElementById('customer-email')?.value.trim() || '';
+  const phone = document.getElementById('customer-phone')?.value.trim() || '';
+  const address = document.getElementById('customer-address')?.value.trim() || '';
+  if (!name) { showToast('Enter customer name.'); return; }
+  try {
+    await api('/api/customers', { method: 'POST', body: JSON.stringify({ name, email, phone, address }) });
+    document.getElementById('customer-name').value = '';
+    document.getElementById('customer-email').value = '';
+    document.getElementById('customer-phone').value = '';
+    document.getElementById('customer-address').value = '';
+    showToast('Customer added. Login password is customer.');
+    await loadCustomers();
+    await refreshDashboard();
+    loadNotifications();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+async function loadCustomers() {
+  const table = document.getElementById('customers-table-body');
+  if (!table || currentUser?.role !== 'admin') return;
+  try {
+    const data = await api('/api/customers');
+    const customers = data.customers || [];
+    table.innerHTML = customers.length ? customers.map((customer, index) => '<tr><td style="color:var(--gray-400);font-weight:600">#' + String(index + 1).padStart(3, '0') + '</td><td><strong>' + (customer.name || '') + '</strong></td><td>' + (customer.email || '-') + '</td><td>' + (customer.phone || '-') + '</td><td>' + (customer.address || '-') + '</td><td><span class="badge badge-active">' + (customer.username || '-') + '</span></td></tr>').join('') : '<tr><td colspan="6" class="empty-state">No customers yet.</td></tr>';
+  } catch (error) {
+    table.innerHTML = '<tr><td colspan="6" class="empty-state">Could not load customers.</td></tr>';
+  }
+}
+
+
+async function createOrder() {
+  if (currentUser?.role !== 'admin') {
+    showToast('Only admin can create orders.');
+    return;
+  }
+  const customer = document.getElementById('order-customer')?.value.trim();
+  const service = document.getElementById('order-service')?.value || 'Wash & Fold';
+  const weight = Number(document.getElementById('order-weight')?.value || 0);
+  if (!customer) { showToast('Enter customer name.'); return; }
+  if (!weight || weight <= 0) { showToast('Enter weight in kg.'); return; }
+  try {
+    await api('/api/orders', { method: 'POST', body: JSON.stringify({ customer, service, weight }) });
+    document.getElementById('order-customer').value = '';
+    document.getElementById('order-weight').value = '';
+    showToast('Order created. Customer notification saved/sent.');
+    await refreshDashboard();
+    if (currentUser?.role === 'admin') loadNotifications();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
 
 function applyRoleView() {
   const isAdmin = currentUser?.role === 'admin';
@@ -96,6 +157,7 @@ function showSection(name, el) {
   const titles = {dashboard:'Dashboard',customers:'Customer Records',transactions:'Laundry Transactions',reports:'Reports',analytics:'Analytics'};
   document.getElementById('topbar-title').textContent = currentUser?.role === 'customer' && name === 'transactions' ? 'My Orders' : (titles[name] || name);
   if (name === 'dashboard' || name === 'analytics' || name === 'transactions') refreshDashboard();
+  if (name === 'customers' && currentUser?.role === 'admin') loadCustomers();
   if (name === 'reports' && currentUser?.role === 'admin') loadNotifications();
 }
 
@@ -122,6 +184,10 @@ function renderOrders(orders) {
   const customerList = document.getElementById('customer-orders-list');
   if (customerList) {
     customerList.innerHTML = orders.length ? orders.map(order => '<div class="customer-order"><strong>' + order.service + '</strong><span>' + order.status + ' · ' + order.weight + ' kg · ₱' + Number(order.amount).toFixed(2) + '</span></div>').join('') : '<div class="empty-state">No orders yet.</div>';
+  }
+  const tableBody = document.getElementById('orders-table-body');
+  if (tableBody && currentUser?.role === 'admin') {
+    tableBody.innerHTML = orders.length ? orders.map((order, index) => '<tr><td style="color:var(--gray-400);font-weight:600">#' + String(index + 1).padStart(3, '0') + '</td><td><strong>' + order.customer + '</strong></td><td>' + order.service + '</td><td>' + order.weight + ' kg</td><td><strong>₱' + Number(order.amount).toFixed(2) + '</strong></td><td><span class="badge badge-active">● Active</span></td><td><span class="badge badge-pending">' + order.status + '</span></td><td><div class="tbl-actions"><button class="btn-tbl btn-receipt">Receipt</button></div></td></tr>').join('') : '<tr><td colspan="8" class="empty-state">No orders yet.</td></tr>';
   }
 }
 

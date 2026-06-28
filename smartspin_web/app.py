@@ -112,6 +112,25 @@ def send_notification(to_email: str, subject: str, body: str, kind: str = "info"
     return item
 
 
+def find_customer(data: dict, name_or_username: str) -> dict | None:
+    target = name_or_username.strip().lower()
+    for customer in data.get("customers", []):
+        if customer.get("username", "").lower() == target or customer.get("name", "").lower() == target:
+            return customer
+    return None
+
+
+def order_amount(service: str, weight: float) -> float:
+    rates = {
+        "Wash & Fold": 50,
+        "Wash & Dry": 65,
+        "Dry Clean": 120,
+        "Iron Only": 35,
+    }
+    return round(rates.get(service, 50) * max(weight, 1), 2)
+
+
+
 def orders_for_user(data: dict, username: str | None, role: str) -> list[dict]:
     orders = data.get("orders", [])
     if role == "admin":
@@ -154,6 +173,8 @@ class SmartSpinHandler(BaseHTTPRequestHandler):
             user = data.get("users", {}).get(username or "", {})
             role = user.get("role", "admin" if not username else "customer")
             self.send_json(summary(data, username, role))
+        elif path == "/api/customers":
+            self.send_json({"customers": data.get("customers", [])})
         elif path == "/api/notifications":
             self.send_json({"notifications": load_outbox()[:25]})
         elif path.startswith("/static/"):
@@ -193,6 +214,79 @@ class SmartSpinHandler(BaseHTTPRequestHandler):
             send_notification(admin_email, "New SMARTSPIN customer", f"New customer registered: {username}", "admin")
             self.send_json({"ok": True})
             return
+        if path == "/api/customers":
+            name = str(payload.get("name", "")).strip()
+            phone = str(payload.get("phone", "")).strip()
+            address = str(payload.get("address", "")).strip()
+            email = str(payload.get("email", "")).strip()
+            if not name:
+                self.send_json({"error": "Customer name is required."}, status=400)
+                return
+            username = str(payload.get("username", "")).strip() or name.lower().replace(" ", "_")
+            customer = {"username": username, "name": name, "email": email, "phone": phone, "address": address}
+            data.setdefault("customers", []).append(customer)
+            users = data.setdefault("users", {})
+            if username not in users:
+                users[username] = {"password": "customer", "role": "customer", "email": email, "name": name}
+            save_data(data)
+            send_notification(email, "Welcome to SMARTSPIN", "Your SMARTSPIN customer profile has been created.", "customer")
+            admin_email = os.environ.get("SMARTSPIN_ADMIN_EMAIL", data["users"].get("admin", {}).get("email", ""))
+            send_notification(admin_email, "New SMARTSPIN customer", f"Customer added: {name}", "admin")
+            self.send_json({"ok": True, "customer": customer})
+            return
+
+        if path == "/api/orders":
+            customer_name = str(payload.get("customer", "")).strip()
+            service = str(payload.get("service", "Wash & Fold")).strip()
+            status = str(payload.get("status", "Pending")).strip() or "Pending"
+            try:
+                weight = float(payload.get("weight", 1))
+            except (TypeError, ValueError):
+                weight = 1.0
+            if not customer_name:
+                self.send_json({"error": "Customer name is required."}, status=400)
+                return
+            if weight <= 0:
+                self.send_json({"error": "Weight must be greater than zero."}, status=400)
+                return
+
+            customer = find_customer(data, customer_name)
+            if not customer:
+                username = customer_name.lower().replace(" ", "_")
+                customer = {"username": username, "name": customer_name, "email": "", "phone": "", "address": ""}
+                data.setdefault("customers", []).append(customer)
+
+            amount = order_amount(service, weight)
+            order = {
+                "id": len(data.get("orders", [])) + 1,
+                "customer": customer.get("name", customer_name),
+                "username": customer.get("username", ""),
+                "service": service,
+                "weight": weight,
+                "amount": amount,
+                "status": status,
+                "day": datetime.now().strftime("%a"),
+            }
+            data.setdefault("orders", []).append(order)
+            save_data(data)
+
+            customer_email = customer.get("email", "")
+            send_notification(
+                customer_email,
+                "SMARTSPIN order created",
+                f"Your {service} order has been created. Weight: {weight} kg. Amount: PHP {amount:.2f}. Status: {status}.",
+                "order",
+            )
+            admin_email = os.environ.get("SMARTSPIN_ADMIN_EMAIL", data["users"].get("admin", {}).get("email", ""))
+            send_notification(
+                admin_email,
+                "New SMARTSPIN order",
+                f"New order for {customer.get('name', customer_name)}: {service}, {weight} kg, PHP {amount:.2f}.",
+                "admin-order",
+            )
+            self.send_json({"ok": True, "order": order})
+            return
+
         self.send_error(404, "Not found")
 
     def send_static(self, request_path: str) -> None:
