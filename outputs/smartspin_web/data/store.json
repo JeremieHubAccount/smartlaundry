@@ -1,0 +1,36 @@
+{
+  "users": {
+    "admin": {
+      "password": "admin",
+      "role": "admin",
+      "email": "admin@smartspin.local",
+      "name": "SMARTSPIN Admin"
+    },
+    "juan": {
+      "password": "customer",
+      "role": "customer",
+      "email": "juan@example.com",
+      "name": "Juan Dela Cruz"
+    }
+  },
+  "customers": [
+    {
+      "username": "juan",
+      "name": "Juan Dela Cruz",
+      "email": "juan@example.com",
+      "phone": "0917 123 4567",
+      "address": "San Fernando, La Union"
+    }
+  ],
+  "orders": [
+    {
+      "customer": "Juan Dela Cruz",
+      "username": "juan",
+      "service": "Wash & Fold",
+      "weight": 1,
+      "amount": 50,
+      "status": "Pending",
+      "day": "Fri"
+    }
+  ]
+}
