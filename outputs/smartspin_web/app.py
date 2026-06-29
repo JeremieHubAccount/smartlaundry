@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import smtplib
+import socket
 from datetime import datetime
 from email.message import EmailMessage
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -118,6 +119,15 @@ def send_notification(to_email: str, subject: str, body: str, kind: str = "info"
     print("SMTP_FROM:", repr(sender))
 
     if host and user and password and to_email:
+        print("SMTP_HOST =", host)
+        print("SMTP_PORT =", port)
+        print("SMTP_USER =", user)
+
+        try:
+            print("DNS =", socket.gethostbyname(host))
+        except Exception as e:
+            print("DNS ERROR:", repr(e))
+        
         try:
             with smtplib.SMTP(host, port, timeout=10) as smtp:
                 smtp.starttls()
